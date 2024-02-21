@@ -88,8 +88,8 @@ const FakeNavBar = ({ onCartAdd, handleSelectVideo }) => {
     return (
         <View style={styles.container}>
             <TouchableOpacity style={styles.navItem} onPress={handleHomePress}>
-                <Image source={require('../assets/homeg.png')} style={[styles.navImage, styles.centerImage]} />
-                <Text style={styles.navText}>Home</Text>
+                <Image source={require('../src/xhibit.png')} style={[styles.navImage, styles.centerImage]} />
+                <Text style={styles.navText}>Xhibit</Text>
             </TouchableOpacity>
             <Animated.View
                 style={[
@@ -115,11 +115,11 @@ const FakeNavBar = ({ onCartAdd, handleSelectVideo }) => {
                     style={styles.circleButton}
                     onPress={triggerCircleAnimation}
                 >
-                    <Image source={require('../src/categories.png')} style={styles.navImage2} />
+                    <Image source={require('../src/xure.png')} style={styles.navImage2} />
                 </TouchableOpacity>
             </Animated.View>
             <TouchableOpacity style={styles.navItem}>
-                <Image source={require('../assets/userg.png')} style={styles.navImage} />
+                <Image source={require('../assets/userg2.png')} style={styles.navImage} />
                 <Text style={styles.navText}>Profile</Text>
             </TouchableOpacity>
         </View>
@@ -131,14 +131,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        backgroundColor: '#111111',
+        backgroundColor: '#202020',
         borderTopWidth: 1,
-        borderTopColor: '#E2BF85',
+        borderTopColor: 'black',
         paddingVertical: 10,
         position: 'absolute',
         bottom: 0,
         width: '100%',
-        height: 70
+        height: 70,
     },
     navItem: {
         alignItems: 'center',
@@ -149,19 +149,19 @@ const styles = StyleSheet.create({
         marginBottom: 5,
     },
     navImage2: {
-        width: 50,
-        height: 50,
+        width: 70,
+        height: 70,
     },
     centerImage: {
         transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }],
     },
     navText: {
         fontSize: 12,
-        color: '#E2BF85'
+        color: 'white'
     },
     circleContainer: {
         position: 'relative',
-        top: -25,
+        top: -35,
         borderRadius: 999,
         overflow: 'hidden',
         backgroundColor: '#E2BF85',

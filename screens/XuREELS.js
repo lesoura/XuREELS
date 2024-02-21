@@ -6,6 +6,7 @@ import {
     StyleSheet,
     NativeEventEmitter,
     NativeModules,
+    TextInput
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { isValidVideo, showEditor } from 'react-native-video-trim';
@@ -90,6 +91,15 @@ const XuREELS = ({ handleNavigation }) => {
         };
     }, []);
 
+    useEffect(() => {
+        // Log the contents of AsyncStorage whenever selectedVideos changes
+        AsyncStorage.getItem('processedVideos')
+            .then((storedVideos) => {
+                console.log('AsyncStorage Content:', storedVideos);
+            })
+            .catch((error) => console.log('Error fetching videos from AsyncStorage:', error));
+    }, [selectedVideos]);
+
     const handleTogglePlay = (id) => {
         const updatedVideos = selectedVideos.map((video) => {
             return {
@@ -121,28 +131,56 @@ const XuREELS = ({ handleNavigation }) => {
         }
     };
 
-    useEffect(() => {
-        // Log the contents of AsyncStorage whenever selectedVideos changes
-        AsyncStorage.getItem('processedVideos')
-            .then((storedVideos) => {
-                console.log('AsyncStorage Content:', storedVideos);
-            })
-            .catch((error) => console.log('Error fetching videos from AsyncStorage:', error));
-    }, [selectedVideos]);
+    const handleToggleHype = (id) => {
+        // Find the index of the video in the selectedVideos array
+        const videoIndex = selectedVideos.findIndex((video) => video.id === id);
+
+        // Check if the video is found in the array
+        if (videoIndex !== -1) {
+            // Create a copy of the selectedVideos array
+            const updatedVideos = [...selectedVideos];
+
+            // Toggle between 'hypes.png' and 'hypeg.png' based on the current state
+            updatedVideos[videoIndex] = {
+                ...updatedVideos[videoIndex],
+                iconSource: updatedVideos[videoIndex].iconSource === require('../src/hypes.png')
+                    ? require('../src/hypeg.png')
+                    : require('../src/hypes.png'),
+            };
+
+            // Update the selectedVideos state with the modified array
+            setSelectedVideos(updatedVideos);
+
+            // Save the updated videos to AsyncStorage
+            AsyncStorage.setItem('processedVideos', JSON.stringify(updatedVideos))
+                .then(() => console.log('Videos stored successfully'))
+                .catch((error) => console.log('Error storing videos:', error));
+        }
+    };
 
     return (
         <View style={styles.container}>
-            {/* XuREELS label on the top left */}
-            <View style={styles.xuReelsLabel}>
-                <Text style={styles.labelText}>XuREELS</Text>
-            </View>
+            {/* Row container for XuREELS, left arrow, and camera */}
+            <View style={styles.rowContainer}>
+                {/* Left arrow icon on the left */}
+                <FastImage
+                    source={require('../assets/left-arrow.png')}
+                    style={styles.leftArrowIcon}
+                    resizeMode={FastImage.resizeMode.contain}
+                />
 
-            {/* FastImage on the top right */}
-            <FastImage
-                source={require('../assets/camg.png')}
-                style={styles.cameraIcon}
-                resizeMode={FastImage.resizeMode.contain}
-            />
+                {/* XuREELS label in the center */}
+                <View style={styles.xuReelsLabel}>
+                    <Text style={styles.labelText}>XuREELS</Text>
+                </View>
+
+                {/* Camera icon on the right */}
+                <FastImage
+                    source={require('../assets/cam.png')}
+                    style={styles.cameraIcon}
+                    resizeMode={FastImage.resizeMode.contain}
+                />
+            </View>
 
             {/* Swiper component */}
             <Swiper
@@ -158,20 +196,74 @@ const XuREELS = ({ handleNavigation }) => {
                         onPress={() => handleTogglePlay(item.id)}
                     >
                         {item.uri ? (
-                            <Video
-                                source={{ uri: item.uri }}
-                                style={styles.video}
-                                controls={false}
-                                resizeMode="cover"
-                                paused={item.paused}
-                            />
+                            <React.Fragment>
+                                <Video
+                                    source={{ uri: item.uri }}
+                                    style={styles.video}
+                                    controls={false}
+                                    resizeMode="cover"
+                                    paused={item.paused}
+                                />
+                                {/* Column of icons */}
+                                <View style={styles.iconColumn}>
+                                    {/* Munchkin image */}
+                                    <FastImage
+                                        source={require('../src/munchkin.gif')}
+                                        style={styles.munchkinImage}
+                                        resizeMode={FastImage.resizeMode.cover}
+                                    />
+                                    {/* Name text */}
+                                    <Text style={styles.nameText}>Munchkin</Text>
+
+                                    {/* Other icons */}
+                                    <TouchableOpacity
+                                        onPress={() => handleToggleHype(item.id)}
+                                    >
+                                        <FastImage
+                                            source={item.iconSource || require('../src/hypes.png')}
+                                            style={styles.icon}
+                                            resizeMode={FastImage.resizeMode.contain}
+                                        />
+                                        {/* Sublabel */}
+                                        <Text style={styles.subLabel}>Hype</Text>
+                                    </TouchableOpacity>
+                                    <FastImage
+                                        source={require('../src/comment.png')}
+                                        style={styles.icon}
+                                        resizeMode={FastImage.resizeMode.contain}
+                                    />
+                                    {/* Sublabel */}
+                                    <Text style={styles.subLabel}>Comment</Text>
+                                    <FastImage
+                                        source={require('../src/sharew.png')}
+                                        style={styles.icon}
+                                        resizeMode={FastImage.resizeMode.contain}
+                                    />
+                                    {/* Sublabel */}
+                                    <Text style={styles.subLabel}>Send</Text>
+                                    <FastImage
+                                        source={require('../src/option.png')}
+                                        style={styles.icon2}
+                                        resizeMode={FastImage.resizeMode.contain}
+                                    />
+                                </View>
+
+                                {/* Text input for leaving a comment */}
+                                <View style={styles.commentInputContainer}>
+                                    <TextInput
+                                        style={styles.commentInput}
+                                        placeholder="Leave a comment"
+                                        placeholderTextColor="#FFFFFF"
+                                    />
+                                </View>
+
+                            </React.Fragment>
                         ) : (
                             <Text>Invalid Video Source</Text>
                         )}
                     </TouchableOpacity>
                 ))}
             </Swiper>
-
 
             {/* FakeNavBar at the bottom */}
             <FakeNavBar handleSelectVideo={handleSelectVideo} />
@@ -184,11 +276,25 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#111111',
     },
-    xuReelsLabel: {
+    rowContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         position: 'absolute',
         top: 20,
         left: 20,
+        right: 20,
         zIndex: 1,
+    },
+    xuReelsLabel: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: -35
+    },
+    leftArrowIcon: {
+        width: 35,
+        height: 35,
     },
     labelText: {
         color: '#E2BF85',
@@ -196,8 +302,7 @@ const styles = StyleSheet.create({
     },
     cameraIcon: {
         position: 'absolute',
-        top: 20,
-        right: 20,
+        right: 0,
         width: 30,
         height: 30,
         zIndex: 1,
@@ -207,6 +312,66 @@ const styles = StyleSheet.create({
     },
     video: {
         flex: 1,
+        borderTopRightRadius: 30,
+        borderTopLeftRadius: 30
+    },
+
+    // Inside the iconColumn styles
+    iconColumn: {
+        position: 'absolute',
+        bottom: 80,
+        right: 5,
+        flexDirection: 'column',
+        alignItems: 'center',
+    },
+    icon: {
+        width: 30,
+        height: 30,
+        marginTop: 15,
+    },
+    icon2: {
+        width: 40,
+        height: 40,
+        marginBottom: 10,
+    },
+    subLabel: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        marginBottom: 5,
+        marginTop: 1,
+    },
+
+    // Add new styles for the munchkin image and name
+    munchkinImage: {
+        width: 30,
+        height: 30,
+        borderRadius: 15, // Adjust as needed
+    },
+    nameText: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        marginTop: 2,
+        backgroundColor: '#202020',
+        padding: 5,
+        borderRadius: 20
+    },
+
+    // Leave a comment
+    commentInputContainer: {
+        position: 'absolute',
+        bottom: 90,
+        left: 15,
+        opacity: 0.5
+    },
+    commentInput: {
+        width: 300,
+        height: 40,
+        backgroundColor: '#202020',
+        color: '#FFFFFF',
+        borderBottomRightRadius: 10,
+        borderTopRightRadius: 10,
+        borderBottomLeftRadius: 10,
+        paddingLeft: 10,
     },
 });
 
