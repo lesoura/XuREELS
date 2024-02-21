@@ -146,6 +146,12 @@ const XuREELS = ({ handleNavigation }) => {
                 iconSource: updatedVideos[videoIndex].iconSource === require('../src/hypes.png')
                     ? require('../src/hypeg.png')
                     : require('../src/hypes.png'),
+                subLabelColor: updatedVideos[videoIndex].subLabelColor === '#FFFFFF'
+                    ? '#E2BF85'  // Set your gold color here
+                    : '#FFFFFF',
+                subLabelText: updatedVideos[videoIndex].subLabelText === 'Hype'
+                    ? 'Hyped'
+                    : 'Hype',
             };
 
             // Update the selectedVideos state with the modified array
@@ -225,7 +231,9 @@ const XuREELS = ({ handleNavigation }) => {
                                             resizeMode={FastImage.resizeMode.contain}
                                         />
                                         {/* Sublabel */}
-                                        <Text style={styles.subLabel}>Hype</Text>
+                                        <Text style={{ ...styles.subLabel, color: item.subLabelColor || '#FFFFFF' }}>
+                                            {item.subLabelText || 'Hype'}
+                                        </Text>
                                     </TouchableOpacity>
                                     <FastImage
                                         source={require('../src/comment.png')}
@@ -328,6 +336,7 @@ const styles = StyleSheet.create({
         width: 30,
         height: 30,
         marginTop: 15,
+        alignSelf: 'center'
     },
     icon2: {
         width: 40,
@@ -339,6 +348,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginBottom: 5,
         marginTop: 1,
+        alignSelf: 'center'
     },
 
     // Add new styles for the munchkin image and name
