@@ -7,14 +7,13 @@ const FakeNavBar = ({ onCartAdd, handleSelectVideo }) => {
     const scaleValue = useRef(new Animated.Value(1)).current;
     const [borderColor, setBorderColor] = useState('#fff');
     const [circleContainerBorderWidth, setCircleContainerBorderWidth] = useState(0);
-    const [borderColors, setBorderColors] = useState(['#8a2be2']); // Add more colors if needed
+    const [borderColors, setBorderColors] = useState(['#8a2be2']);
     const [currentColorIndex, setCurrentColorIndex] = useState(0);
     const [circleContainerRotation] = useState(new Animated.Value(0));
     const categoriesImageScale = useRef(new Animated.Value(1)).current;
     const categoriesImageRotation = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // Listen for changes in the cart and trigger animation accordingly
         if (onCartAdd) {
             onCartAdd(triggerCircleAnimation);
         }
@@ -136,9 +135,9 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#E2BF85',
         paddingVertical: 10,
-        position: 'absolute', // Fix the navbar at the bottom
-        bottom: 0, // Align with the bottom of the screen
-        width: '100%', // Occupy the full width
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
         height: 70
     },
     navItem: {
@@ -168,14 +167,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#E2BF85',
         marginLeft: -70,
         marginRight: -70,
-        // Add shadow for iOS
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
-        // Add elevation for Android
         elevation: 7,
-        borderWidth: 0, // Initial border width
+        borderWidth: 0,
     },
     circleButton: {
         width: 80,
@@ -186,11 +183,11 @@ const styles = StyleSheet.create({
     },
     backgroundCircle: {
         position: 'absolute',
-        top: -80, // Adjust the positioning based on your design
+        top: -80,
         left: -80,
-        width: 240, // Adjust the size based on your design
+        width: 240,
         height: 240,
-        borderRadius: 120, // Half of the width/height to make it a circle
+        borderRadius: 120,
     },
 });
 

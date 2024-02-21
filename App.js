@@ -15,7 +15,7 @@ const App = () => {
             <Stack.Screen
               name="XuREELS"
               component={XuREELS}
-              options={{ headerShown: false }} // This line hides the header
+              options={{ headerShown: false }}
             />
           </Stack.Navigator>
         </SafeAreaView>

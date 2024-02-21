@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+    View,
+    TouchableOpacity,
+    Text,
+    StyleSheet,
+    NativeEventEmitter,
+    NativeModules,
+} from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { isValidVideo, showEditor } from 'react-native-video-trim';
 import Video from 'react-native-video';
-import ImagePicker from 'react-native-image-crop-picker';
 import FastImage from 'react-native-fast-image';
 import Swiper from 'react-native-swiper';
 import FakeNavBar from './FakeNavBar';
@@ -9,27 +17,75 @@ import FakeNavBar from './FakeNavBar';
 const XuREELS = ({ handleNavigation }) => {
     const [selectedVideos, setSelectedVideos] = useState([]);
 
-    const handleUploadVideo = (video) => {
-        setSelectedVideos((prevVideos) => [...prevVideos, video]);
-    };
+    useEffect(() => {
+        const eventEmitter = new NativeEventEmitter(NativeModules.VideoTrim);
+        const subscription = eventEmitter.addListener('VideoTrim', (event) => {
+            switch (event.name) {
+                case 'onShow': {
+                    console.log('onShowListener', event);
+                    break;
+                }
+                case 'onHide': {
+                    console.log('onHide', event);
+                    break;
+                }
+                case 'onStartTrimming': {
+                    console.log('onStartTrimming', event);
+                    break;
+                }
+                case 'onFinishTrimming': {
+                    console.log('onFinishTrimming', event);
 
-    const handleTogglePlay = (index) => {
-        const updatedVideos = [...selectedVideos];
-        updatedVideos[index].paused = !updatedVideos[index].paused;
+                    const trimmedVideo = {
+                        id: Date.now(),
+                        uri: event.outputPath, // Use the outputPath from the event
+                        paused: false,
+                    };
+
+                    // Update the selectedVideos state with the trimmed video
+                    setSelectedVideos([trimmedVideo]);  // Set the latest trimmed video as the only video
+
+                    break;
+                }
+                case 'onCancelTrimming': {
+                    console.log('onCancelTrimming', event);
+                    break;
+                }
+                case 'onError': {
+                    console.log('onError', event);
+                    break;
+                }
+            }
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, []);
+
+    const handleTogglePlay = (id) => {
+        const updatedVideos = selectedVideos.map((video) =>
+            video.id === id ? { ...video, paused: !video.paused } : video
+        );
         setSelectedVideos(updatedVideos);
     };
 
     const handleSelectVideo = async () => {
         try {
-            const video = await ImagePicker.openPicker({
+            const result = await launchImageLibrary({
                 mediaType: 'video',
+                assetRepresentationMode: 'current',
             });
 
-            // Add a 'paused' property to control play/pause state
-            video.paused = false;
+            if (result?.assets && result.assets[0]?.uri) {
+                isValidVideo(result.assets[0].uri).then((res) => console.log(res));
 
-            // Pass the selected video to the parent component
-            handleUploadVideo(video);
+                showEditor(result.assets[0].uri, {
+                    maxDuration: 20,
+                });
+            } else {
+                console.log('Invalid video selection');
+            }
         } catch (error) {
             console.log('Error selecting video:', error);
         }
@@ -52,23 +108,27 @@ const XuREELS = ({ handleNavigation }) => {
             {/* Swiper component */}
             <Swiper
                 loop={false}
-                index={0}
+                index={selectedVideos.length - 1} // Set the initial index to the last video
                 showsPagination={false}
                 onIndexChanged={(index) => console.log(`Swiped to index ${index}`)}
             >
                 {selectedVideos.map((item, index) => (
                     <TouchableOpacity
-                        key={item.path}
+                        key={item.id ? item.id.toString() : 'undefined'}
                         style={styles.videoContainer}
-                        onPress={() => handleTogglePlay(index)}
+                        onPress={() => handleTogglePlay(item.id)}
                     >
-                        <Video
-                            source={{ uri: item.path }}
-                            style={styles.video}
-                            controls={false}
-                            resizeMode="cover"
-                            paused={item.paused}
-                        />
+                        {index === selectedVideos.length - 1 && item.uri ? ( // Only render the last video in the array
+                            <Video
+                                source={{ uri: item.uri }}
+                                style={styles.video}
+                                controls={false}
+                                resizeMode="cover"
+                                paused={item.paused}
+                            />
+                        ) : (
+                            <Text>Invalid Video Source</Text>
+                        )}
                     </TouchableOpacity>
                 ))}
             </Swiper>
@@ -91,7 +151,7 @@ const styles = StyleSheet.create({
         zIndex: 1,
     },
     labelText: {
-        color: 'white',
+        color: '#E2BF85',
         fontSize: 18,
     },
     cameraIcon: {
