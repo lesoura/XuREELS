@@ -13,6 +13,7 @@ import Video from 'react-native-video';
 import FastImage from 'react-native-fast-image';
 import Swiper from 'react-native-swiper';
 import FakeNavBar from './FakeNavBar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const XuREELS = ({ handleNavigation }) => {
     const [selectedVideos, setSelectedVideos] = useState([]);
@@ -34,16 +35,33 @@ const XuREELS = ({ handleNavigation }) => {
                     break;
                 }
                 case 'onFinishTrimming': {
-                    console.log('onFinishTrimming', event);
-
                     const trimmedVideo = {
                         id: Date.now(),
-                        uri: event.outputPath, // Use the outputPath from the event
+                        uri: event.outputPath,
                         paused: false,
                     };
 
-                    // Update the selectedVideos state with the trimmed video
-                    setSelectedVideos([trimmedVideo]);  // Set the latest trimmed video as the only video
+                    // Fetch the existing videos from AsyncStorage
+                    AsyncStorage.getItem('processedVideos')
+                        .then((storedVideos) => {
+                            let updatedVideos = [];
+
+                            // If there are existing videos, parse and append the new video
+                            if (storedVideos) {
+                                updatedVideos = JSON.parse(storedVideos);
+                            }
+
+                            updatedVideos.push(trimmedVideo);
+
+                            // Update the selectedVideos state with the new array of videos
+                            setSelectedVideos(updatedVideos);
+
+                            // Store the updated videos in AsyncStorage
+                            AsyncStorage.setItem('processedVideos', JSON.stringify(updatedVideos))
+                                .then(() => console.log('Videos stored successfully'))
+                                .catch((error) => console.log('Error storing videos:', error));
+                        })
+                        .catch((error) => console.log('Error fetching videos from AsyncStorage:', error));
 
                     break;
                 }
@@ -58,15 +76,27 @@ const XuREELS = ({ handleNavigation }) => {
             }
         });
 
+        // Fetch stored videos from AsyncStorage when the component mounts
+        AsyncStorage.getItem('processedVideos')
+            .then((storedVideos) => {
+                if (storedVideos) {
+                    setSelectedVideos(JSON.parse(storedVideos));
+                }
+            })
+            .catch((error) => console.log('Error fetching videos from AsyncStorage:', error));
+
         return () => {
             subscription.remove();
         };
     }, []);
 
     const handleTogglePlay = (id) => {
-        const updatedVideos = selectedVideos.map((video) =>
-            video.id === id ? { ...video, paused: !video.paused } : video
-        );
+        const updatedVideos = selectedVideos.map((video) => {
+            return {
+                ...video,
+                paused: video.id === id ? !video.paused : true,
+            };
+        });
         setSelectedVideos(updatedVideos);
     };
 
@@ -91,6 +121,15 @@ const XuREELS = ({ handleNavigation }) => {
         }
     };
 
+    useEffect(() => {
+        // Log the contents of AsyncStorage whenever selectedVideos changes
+        AsyncStorage.getItem('processedVideos')
+            .then((storedVideos) => {
+                console.log('AsyncStorage Content:', storedVideos);
+            })
+            .catch((error) => console.log('Error fetching videos from AsyncStorage:', error));
+    }, [selectedVideos]);
+
     return (
         <View style={styles.container}>
             {/* XuREELS label on the top left */}
@@ -108,7 +147,7 @@ const XuREELS = ({ handleNavigation }) => {
             {/* Swiper component */}
             <Swiper
                 loop={false}
-                index={selectedVideos.length - 1} // Set the initial index to the last video
+                index={selectedVideos.length - 1}
                 showsPagination={false}
                 onIndexChanged={(index) => console.log(`Swiped to index ${index}`)}
             >
@@ -118,7 +157,7 @@ const XuREELS = ({ handleNavigation }) => {
                         style={styles.videoContainer}
                         onPress={() => handleTogglePlay(item.id)}
                     >
-                        {index === selectedVideos.length - 1 && item.uri ? ( // Only render the last video in the array
+                        {item.uri ? (
                             <Video
                                 source={{ uri: item.uri }}
                                 style={styles.video}
@@ -132,6 +171,7 @@ const XuREELS = ({ handleNavigation }) => {
                     </TouchableOpacity>
                 ))}
             </Swiper>
+
 
             {/* FakeNavBar at the bottom */}
             <FakeNavBar handleSelectVideo={handleSelectVideo} />
