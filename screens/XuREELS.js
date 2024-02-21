@@ -6,7 +6,8 @@ import {
     StyleSheet,
     NativeEventEmitter,
     NativeModules,
-    TextInput
+    TextInput,
+    ActivityIndicator
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { isValidVideo, showEditor } from 'react-native-video-trim';
@@ -18,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const XuREELS = ({ handleNavigation }) => {
     const [selectedVideos, setSelectedVideos] = useState([]);
+    const [loading, setLoading] = useState(false); // Add loading state
 
     useEffect(() => {
         const eventEmitter = new NativeEventEmitter(NativeModules.VideoTrim);
@@ -104,7 +106,7 @@ const XuREELS = ({ handleNavigation }) => {
         const updatedVideos = selectedVideos.map((video) => {
             return {
                 ...video,
-                paused: video.id === id ? !video.paused : true,
+                paused: video.id === id ? !video.paused : false, // Set paused to false for auto-play
             };
         });
         setSelectedVideos(updatedVideos);
@@ -112,6 +114,7 @@ const XuREELS = ({ handleNavigation }) => {
 
     const handleSelectVideo = async () => {
         try {
+            setLoading(true); // Set loading to true before launching image library
             const result = await launchImageLibrary({
                 mediaType: 'video',
                 assetRepresentationMode: 'current',
@@ -120,13 +123,18 @@ const XuREELS = ({ handleNavigation }) => {
             if (result?.assets && result.assets[0]?.uri) {
                 isValidVideo(result.assets[0].uri).then((res) => console.log(res));
 
+                // Hide loading screen before showing the editor
+                setLoading(false);
+
                 showEditor(result.assets[0].uri, {
                     maxDuration: 20,
                 });
             } else {
+                setLoading(false); // Hide loading screen in case of invalid video selection
                 console.log('Invalid video selection');
             }
         } catch (error) {
+            setLoading(false); // Hide loading screen in case of an error
             console.log('Error selecting video:', error);
         }
     };
@@ -166,6 +174,13 @@ const XuREELS = ({ handleNavigation }) => {
 
     return (
         <View style={styles.container}>
+
+            {loading && (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#E2BF85" />
+                </View>
+            )}
+
             {/* Row container for XuREELS, left arrow, and camera */}
             <View style={styles.rowContainer}>
                 {/* Left arrow icon on the left */}
@@ -382,6 +397,14 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 10,
         borderBottomLeftRadius: 10,
         paddingLeft: 10,
+    },
+
+    // Add a new style for the loading container
+    loadingContainer: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 
