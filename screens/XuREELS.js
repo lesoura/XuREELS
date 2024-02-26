@@ -7,7 +7,8 @@ import {
     NativeEventEmitter,
     NativeModules,
     TextInput,
-    ActivityIndicator
+    ActivityIndicator,
+    Modal
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { isValidVideo, showEditor } from 'react-native-video-trim';
@@ -16,10 +17,101 @@ import FastImage from 'react-native-fast-image';
 import Swiper from 'react-native-swiper';
 import FakeNavBar from './FakeNavBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Tooltip from 'react-native-walkthrough-tooltip';
+
+import styles from '../styles/XuREELStyles'
 
 const XuREELS = ({ handleNavigation }) => {
     const [selectedVideos, setSelectedVideos] = useState([]);
     const [loading, setLoading] = useState(false); // Add loading state
+    const [showEndingTooltip, setShowEndingTooltip] = useState(false);
+
+    // Tooltip
+    const [currentTooltipIndex, setCurrentTooltipIndex] = useState(0);
+    const tooltips = [
+        {
+            content: (
+                <>
+                    <Text style={{ color: '#F7D091', textAlign: 'center' }}>
+                        Welcome to XuREELS!
+                    </Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <TouchableOpacity onPress={() => setCurrentTooltipIndex(1)}>
+                            <Text style={{ color: 'white', textAlign: 'right', marginRight: 10 }}>
+                                Next
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setCurrentTooltipIndex(null)}>
+                            <Text style={{ color: 'white', textAlign: 'right' }}>
+                                Skip
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </>
+            ),
+            onClose: () => setCurrentTooltipIndex(1),
+        },
+        {
+            content: (
+                <>
+                    <Text style={{ color: '#F7D091', textAlign: 'center' }}>
+                        Press this to go back
+                    </Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <TouchableOpacity onPress={() => setCurrentTooltipIndex(2)}>
+                            <Text style={{ color: 'white', textAlign: 'right', marginRight: 10 }}>
+                                Next
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setCurrentTooltipIndex(null)}>
+                            <Text style={{ color: 'white', textAlign: 'right' }}>
+                                Skip
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </>
+            ),
+            onClose: () => setCurrentTooltipIndex(2),
+        },
+        {
+            content: (
+                <>
+                    <Text style={{ color: '#F7D091', textAlign: 'center' }}>
+                        Press this to open the camera
+                    </Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <TouchableOpacity onPress={() => setCurrentTooltipIndex(3)}>
+                            <Text style={{ color: 'white', textAlign: 'right', marginRight: 10 }}>
+                                Next
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setCurrentTooltipIndex(null)}>
+                            <Text style={{ color: 'white', textAlign: 'right' }}>
+                                Skip
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </>
+            ),
+            onClose: () => setCurrentTooltipIndex(3),
+        },
+        { content: <Text style={{ color: '#F7D091', textAlign: 'center', backgroundColor: 'transparent', borderColor: '#F7D091' }}>This is the navigation bar, the middle is the upload button!</Text>, onClose: () => setCurrentTooltipIndex(null) },
+    ];
+
+    useEffect(() => {
+        if (currentTooltipIndex === null) {
+            // Show the ending tooltip modal when the tutorial is completed
+            setShowEndingTooltip(true);
+        }
+    }, [currentTooltipIndex]);
+
+    useEffect(() => {
+        if (currentTooltipIndex !== null) {
+            setTimeout(() => {
+                setCurrentTooltipIndex(currentTooltipIndex);
+            }, 100);
+        }
+    }, [currentTooltipIndex]);
 
     useEffect(() => {
         const eventEmitter = new NativeEventEmitter(NativeModules.VideoTrim);
@@ -102,6 +194,10 @@ const XuREELS = ({ handleNavigation }) => {
             .catch((error) => console.log('Error fetching videos from AsyncStorage:', error));
     }, [selectedVideos]);
 
+    const handleCloseEndingTooltip = () => {
+        setShowEndingTooltip(false);
+    };
+
     const handleTogglePlay = (id) => {
         const updatedVideos = selectedVideos.map((video) => {
             return {
@@ -183,24 +279,55 @@ const XuREELS = ({ handleNavigation }) => {
 
             {/* Row container for XuREELS, left arrow, and camera */}
             <View style={styles.rowContainer}>
-                {/* Left arrow icon on the left */}
-                <FastImage
-                    source={require('../assets/left-arrow.png')}
-                    style={styles.leftArrowIcon}
-                    resizeMode={FastImage.resizeMode.contain}
-                />
+
+                <Tooltip
+                    isVisible={currentTooltipIndex === 1}
+                    content={tooltips[1].content}
+                    onClose={() => {
+                        console.log('Closing Tooltip 1');
+                        setCurrentTooltipIndex(2);
+                    }}
+                    placement={'bottom'}
+                >
+                    <FastImage
+                        source={require('../assets/left-arrow.png')}
+                        style={styles.leftArrowIcon}
+                        resizeMode={FastImage.resizeMode.contain}
+                    />
+                </Tooltip>
 
                 {/* XuREELS label in the center */}
-                <View style={styles.xuReelsLabel}>
-                    <Text style={styles.labelText}>XuREELS</Text>
-                </View>
+                <Tooltip
+                    isVisible={currentTooltipIndex === 0}
+                    content={tooltips[0].content}
+                    onClose={() => {
+                        console.log('Closing Tooltip 0');
+                        setCurrentTooltipIndex(1);
+                    }}
+                    tooltipStyle={{ position: "absolute", right: 0, top: 350 }}
+                    placement={'bottom'}
+                >
+                    <View style={styles.xuReelsLabel}>
+                        <Text style={styles.labelText}>XuREELS</Text>
+                    </View>
+                </Tooltip>
 
-                {/* Camera icon on the right */}
-                <FastImage
-                    source={require('../assets/cam.png')}
-                    style={styles.cameraIcon}
-                    resizeMode={FastImage.resizeMode.contain}
-                />
+                <Tooltip
+                    isVisible={currentTooltipIndex === 2}
+                    content={tooltips[2].content}
+                    onClose={() => {
+                        console.log('Closing Tooltip 2');
+                        setCurrentTooltipIndex(3);
+                    }}
+                    placement={'bottom'}
+                >
+                    <FastImage
+                        source={require('../assets/cam.png')}
+                        style={styles.cameraIcon}
+                        resizeMode={FastImage.resizeMode.contain}
+                    />
+                </Tooltip>
+
             </View>
 
             {/* Swiper component */}
@@ -289,123 +416,35 @@ const XuREELS = ({ handleNavigation }) => {
             </Swiper>
 
             {/* FakeNavBar at the bottom */}
-            <FakeNavBar handleSelectVideo={handleSelectVideo} />
-        </View>
+            <Tooltip
+                isVisible={currentTooltipIndex === 3}
+                content={tooltips[3].content}
+                onClose={tooltips[3].onClose}
+                placement={'top'}
+                tooltipStyle={{ position: "absolute", left: 23, right: 0, top: 600 }}
+                backgroundStyle={{ backgroundColor: 'transparent' }}
+                backgroundColor='transparent'
+            >
+                <FakeNavBar handleSelectVideo={handleSelectVideo} />
+            </Tooltip>
+
+            {/* Ending Tooltip Modal */}
+            <Modal
+                transparent={true}
+                visible={showEndingTooltip}
+                animationType="fade"
+                onRequestClose={handleCloseEndingTooltip}
+            >
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalText}>Enjoy and hype up!</Text>
+                    <TouchableOpacity onPress={handleCloseEndingTooltip}>
+                        <Text style={styles.closeButton}>Close</Text>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+
+        </View >
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#111111',
-    },
-    rowContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        position: 'absolute',
-        top: 20,
-        left: 20,
-        right: 20,
-        zIndex: 1,
-    },
-    xuReelsLabel: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginLeft: -35
-    },
-    leftArrowIcon: {
-        width: 35,
-        height: 35,
-    },
-    labelText: {
-        color: '#E2BF85',
-        fontSize: 18,
-    },
-    cameraIcon: {
-        position: 'absolute',
-        right: 0,
-        width: 30,
-        height: 30,
-        zIndex: 1,
-    },
-    videoContainer: {
-        flex: 1,
-    },
-    video: {
-        flex: 1,
-        borderTopRightRadius: 30,
-        borderTopLeftRadius: 30
-    },
-
-    // Inside the iconColumn styles
-    iconColumn: {
-        position: 'absolute',
-        bottom: 80,
-        right: 5,
-        flexDirection: 'column',
-        alignItems: 'center',
-    },
-    icon: {
-        width: 30,
-        height: 30,
-        marginTop: 15,
-        alignSelf: 'center'
-    },
-    icon2: {
-        width: 40,
-        height: 40,
-        marginBottom: 10,
-    },
-    subLabel: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        marginBottom: 5,
-        marginTop: 1,
-        alignSelf: 'center'
-    },
-
-    // Add new styles for the munchkin image and name
-    munchkinImage: {
-        width: 30,
-        height: 30,
-        borderRadius: 15, // Adjust as needed
-    },
-    nameText: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        marginTop: 2,
-        backgroundColor: '#202020',
-        padding: 5,
-        borderRadius: 20
-    },
-
-    // Leave a comment
-    commentInputContainer: {
-        position: 'absolute',
-        bottom: 90,
-        left: 15,
-        opacity: 0.5
-    },
-    commentInput: {
-        width: 300,
-        height: 40,
-        backgroundColor: '#202020',
-        color: '#FFFFFF',
-        borderBottomRightRadius: 10,
-        borderTopRightRadius: 10,
-        borderBottomLeftRadius: 10,
-        paddingLeft: 10,
-    },
-
-    // Add a new style for the loading container
-    loadingContainer: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-});
 
 export default XuREELS;
