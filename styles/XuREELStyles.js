@@ -125,6 +125,18 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: '#E2BF85',
     },
+
+    // Hype modal
+    modalContainer2: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0)', // semi-transparent black background
+    },
+    fastImageMan: {
+        width: 250, // adjust the width as needed
+        height: 250, // adjust the height as needed
+    },
 });
 
 export default styles;

@@ -8,7 +8,8 @@ import {
     NativeModules,
     TextInput,
     ActivityIndicator,
-    Modal
+    Modal,
+    Image
 } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { isValidVideo, showEditor } from 'react-native-video-trim';
@@ -18,6 +19,8 @@ import Swiper from 'react-native-swiper';
 import FakeNavBar from './FakeNavBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Tooltip from 'react-native-walkthrough-tooltip';
+import RNModal from 'react-native-modal';
+import { useNavigation } from '@react-navigation/native';
 
 import styles from '../styles/XuREELStyles'
 
@@ -25,8 +28,12 @@ const XuREELS = ({ handleNavigation }) => {
     const [selectedVideos, setSelectedVideos] = useState([]);
     const [loading, setLoading] = useState(false); // Add loading state
     const [showEndingTooltip, setShowEndingTooltip] = useState(false);
+    const navigation = useNavigation();
 
-    // Tooltip
+    const [singleTap, setSingleTap] = useState({ count: 0, timestamp: 0 });
+    const [RNModal, setRNModal] = useState(false);
+
+    // Tooltip Contents
     const [currentTooltipIndex, setCurrentTooltipIndex] = useState(0);
     const tooltips = [
         {
@@ -98,6 +105,8 @@ const XuREELS = ({ handleNavigation }) => {
         { content: <Text style={{ color: '#F7D091', textAlign: 'center', backgroundColor: 'transparent', borderColor: '#F7D091' }}>This is the navigation bar, the middle is the upload button!</Text>, onClose: () => setCurrentTooltipIndex(null) },
     ];
 
+    // Walkthrough useEffect
+
     useEffect(() => {
         if (currentTooltipIndex === null) {
             // Show the ending tooltip modal when the tutorial is completed
@@ -112,6 +121,8 @@ const XuREELS = ({ handleNavigation }) => {
             }, 100);
         }
     }, [currentTooltipIndex]);
+
+    // Video Trimming
 
     useEffect(() => {
         const eventEmitter = new NativeEventEmitter(NativeModules.VideoTrim);
@@ -250,12 +261,12 @@ const XuREELS = ({ handleNavigation }) => {
                 iconSource: updatedVideos[videoIndex].iconSource === require('../src/hypes.png')
                     ? require('../src/hypeg.png')
                     : require('../src/hypes.png'),
-                subLabelColor: updatedVideos[videoIndex].subLabelColor === '#FFFFFF'
-                    ? '#E2BF85'  // Set your gold color here
-                    : '#FFFFFF',
                 subLabelText: updatedVideos[videoIndex].subLabelText === 'Hype'
                     ? 'Hyped'
                     : 'Hype',
+                subLabelColor: updatedVideos[videoIndex].subLabelColor === '#FFFFFF'
+                    ? '#E2BF85' // Set your gold color here
+                    : '#FFFFFF',
             };
 
             // Update the selectedVideos state with the modified array
@@ -266,6 +277,41 @@ const XuREELS = ({ handleNavigation }) => {
                 .then(() => console.log('Videos stored successfully'))
                 .catch((error) => console.log('Error storing videos:', error));
         }
+    };
+
+    const handleDoubleClick = (id) => {
+        // Open a modal with the FastImage man on double click
+        setRNModal(true);
+
+        // Toggle the hype state for the specific video id
+        handleToggleHype(id);
+
+        // You can also add logic to close the modal after a certain duration if needed
+        setTimeout(() => {
+            setRNModal(false);
+        }, 1000); // Close the modal after 3 seconds (adjust the duration as needed)
+    };
+
+    const handleSingleClick = (id) => {
+        // Trigger the play/pause functionality for single click
+        handleTogglePlay(id);
+    };
+
+    const handleVideoPress = (id) => {
+        const currentTime = new Date().getTime();
+        const { count, timestamp } = singleTap;
+
+        if (count === 1 && currentTime - timestamp < 300) {
+            // Double tap
+            handleDoubleClick(id);
+        } else {
+            // Single tap
+            handleSingleClick(id);
+        }
+
+        // Update single tap state
+        setSingleTap({ count: count + 1, timestamp: currentTime });
+        setTimeout(() => setSingleTap({ count: 0, timestamp: 0 }), 300);
     };
 
     return (
@@ -280,6 +326,7 @@ const XuREELS = ({ handleNavigation }) => {
             {/* Row container for XuREELS, left arrow, and camera */}
             <View style={styles.rowContainer}>
 
+                {/* Tooltip Walkthrough Wrapped Parts */}
                 <Tooltip
                     isVisible={currentTooltipIndex === 1}
                     content={tooltips[1].content}
@@ -289,11 +336,13 @@ const XuREELS = ({ handleNavigation }) => {
                     }}
                     placement={'bottom'}
                 >
-                    <FastImage
-                        source={require('../assets/left-arrow.png')}
-                        style={styles.leftArrowIcon}
-                        resizeMode={FastImage.resizeMode.contain}
-                    />
+                    <TouchableOpacity onPress={() => navigation.navigate('BlankPage')}>
+                        <Image
+                            source={require('../assets/left-arrow.png')}
+                            style={styles.leftArrowIcon}
+                            resizeMode="contain"
+                        />
+                    </TouchableOpacity>
                 </Tooltip>
 
                 {/* XuREELS label in the center */}
@@ -341,7 +390,7 @@ const XuREELS = ({ handleNavigation }) => {
                     <TouchableOpacity
                         key={item.id ? item.id.toString() : 'undefined'}
                         style={styles.videoContainer}
-                        onPress={() => handleTogglePlay(item.id)}
+                        onPress={() => handleVideoPress(item.id)}
                     >
                         {item.uri ? (
                             <React.Fragment>
@@ -414,6 +463,22 @@ const XuREELS = ({ handleNavigation }) => {
                     </TouchableOpacity>
                 ))}
             </Swiper>
+
+            {/* Modal for displaying the GIF */}
+            <Modal
+                transparent={true}
+                visible={RNModal}
+                animationType="fade"
+                onRequestClose={() => setRNModal(false)}
+            >
+                <View style={styles.modalContainer2}>
+                    <Image
+                        source={require('../assets/check.gif')}
+                        style={styles.fastImageMan}
+                        resizeMode="contain"
+                    />
+                </View>
+            </Modal>
 
             {/* FakeNavBar at the bottom */}
             <Tooltip
